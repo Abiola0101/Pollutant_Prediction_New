@@ -1,0 +1,5 @@
+run_id: "your_mlflow_run_id"
+combined_data_path: "data/processed/combined_data.csv"
+start_year: 2020
+n_lags: 5
+target: "Total_Release_Water"

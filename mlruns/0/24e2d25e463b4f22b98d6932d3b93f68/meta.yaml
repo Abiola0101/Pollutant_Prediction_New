@@ -1,0 +1,15 @@
+artifact_uri: file:///home/rutholasupo/2500_Labs/mlruns/0/24e2d25e463b4f22b98d6932d3b93f68/artifacts
+end_time: 1740679952650
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 24e2d25e463b4f22b98d6932d3b93f68
+run_name: handsome-wasp-5
+run_uuid: 24e2d25e463b4f22b98d6932d3b93f68
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1740679918084
+status: 3
+tags: []
+user_id: rutholasupo
