@@ -1,6 +1,33 @@
+# Virtual environment
 .vscode/
 .2500_Labs/
+.venv/
+
+# Python-specific ignores
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+*.egg
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Log files
+*.log
+
+# Environment and configuration files
+.env
+config.yaml
+
+# Data files
 data/
-src/__pycache__
-src/utils/__pycache__
+
+# Model files
 models/
+
+# MLflow artifacts
+mlruns/
+
+# Other
+Zone.Identifier
