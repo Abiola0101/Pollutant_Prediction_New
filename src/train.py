@@ -8,6 +8,9 @@ import numpy as np
 import pickle
 import os
 from mlflow.models.signature import infer_signature
+import yaml
+import mlflow
+import subprocess
 
 # Load training configuration from YAML file
 config_path = '/home/rutholasupo/2500_Labs/configs/train_config.yaml'
@@ -27,12 +30,7 @@ def create_lags_no_group(df, feature, n_lags):
         df[f'{feature}_lag{i}'] = df[feature].shift(i)
     return df
 
-def train_model(data, start_year, n_lags, target, params=None):
-    pollutants = [target]
-    additional_features = [
-        'Population', 'Number_of_Employees', 'Release_to_Air(Fugitive)', 'Release_to_Air(Other_Non-Point)', 
-        'Release_to_Air(Road dust)', 'Release_to_Air(Spills)', 'Release_to_Air(Stack/Point)', 
-        'Release_to_Air(Storage/Handling)', 'Releases_to_Land(Leaks)', 'Releases_to_Land(Other)', 
+
 def train_model(data, start_year, n_lags, target, params):
     pollutants = [target]
     additional_features = [
@@ -50,14 +48,6 @@ def train_model(data, start_year, n_lags, target, params):
     data = pd.concat([data, province_encoded], axis=1)
     estimation_encoded = pd.get_dummies(data['Estimation_Method/Méthode_destimation'], prefix='Estimation_Method', drop_first=True, dtype=int)
     data = pd.concat([data, estimation_encoded], axis=1)
-
-    
-    # One-hot encoding for categorical features
-    province_encoded = pd.get_dummies(data['PROVINCE'], prefix='PROVINCE', drop_first=True, dtype=int)
-    data = pd.concat([data, province_encoded], axis=1)
-    
-    estimation_encoded = pd.get_dummies(data['Estimation_Method/Méthode_destimation'], prefix='Estimation_Method', drop_first=True, dtype=int)
-    data = pd.concat([data, estimation_encoded], axis=1)
     
     encoder = ce.TargetEncoder(cols=['City', 'Facility_Name/Installation', 'NAICS Title/Titre_Code_SCIAN', 'NAICS/Code_SCIAN', "Company_Name/Dénomination_sociale_de_l'entreprise"])
     data = encoder.fit_transform(data, data[target])
@@ -65,12 +55,6 @@ def train_model(data, start_year, n_lags, target, params):
     features = [f'{pollutant}_lag{i}' for pollutant in pollutants for i in range(1, n_lags + 1)] + \
                [f'{feature}_lag{i}' for feature in additional_features for i in range(1, n_lags + 1)] + \
                list(province_encoded.columns) + ['City', 'Facility_Name/Installation', 'NAICS Title/Titre_Code_SCIAN', 'NAICS/Code_SCIAN', "Company_Name/Dénomination_sociale_de_l'entreprise"] + \
-               list(estimation_encoded.columns)
-
-    if 'Region' in data.columns:
-        features += ['Region']
-               list(province_encoded.columns) + \
-               ['City', 'Facility_Name/Installation', 'NAICS Title/Titre_Code_SCIAN', 'NAICS/Code_SCIAN', "Company_Name/Dénomination_sociale_de_l'entreprise"] + \
                list(estimation_encoded.columns)
 
     if 'Region' in data.columns:
@@ -108,17 +92,10 @@ def train_model(data, start_year, n_lags, target, params):
         pickle.dump(pipeline, f)
 
     print(f"Model saved to {model_path}")
-    X_train, y_train = train_data[features], train_data[target]
-    X_test, y_test = test_data[features], test_data[target]
 
     with mlflow.start_run() as run:
         mlflow.log_params(params)
 
-        pipeline = Pipeline([
-            ('scaler', StandardScaler()),
-            ('regressor', RandomForestRegressor(random_state=42, **params))
-        ])
-        
         pipeline.fit(X_train, y_train)
 
         # Evaluate model performance on the test set
@@ -139,11 +116,6 @@ def train_model(data, start_year, n_lags, target, params):
         mlflow.sklearn.log_model(pipeline, artifact_path="model", input_example=input_example, signature=signature)
 
         # Save model locally
-        model_directory = '/home/rutholasupo/2500_Labs/model'
-        model_filename = 'random_forest_model.pkl'
-        os.makedirs(model_directory, exist_ok=True)
-        model_path = os.path.join(model_directory, model_filename)
-
         with open(model_path, 'wb') as f:
             pickle.dump(pipeline, f)
 
@@ -195,25 +167,12 @@ def main():
     # Run the feature_engineering.py script
     subprocess.run(["python3", "src/feature_engineering.py"], check=True)
 
-    train_path = "/home/rutholasupo/2500_Labs/data/processed/train_processed.csv"
-    test_path = "/home/rutholasupo/2500_Labs/data/processed/test_processed.csv"
-    combined_data_path = "/home/rutholasupo/2500_Labs/data/processed/combined_data.csv"
-
     df_train = pd.read_csv(train_path)
     df_test = pd.read_csv(test_path)
 
     combined_df = combine_dataframe(df_train, df_test)
     
     # Save the combined data
-    combined_df.to_csv(combined_data_path, index=False)
-    print(f"Combined data saved to {combined_data_path}")
-
-    start_year = 2020
-    n_lags = 5
-    target = 'Total_Release_Water'
-    params = {'n_estimators': 100, 'max_depth': 10}
-
-    # Train the model
     combined_df.to_csv(combined_data_path, index=False)
     print(f"Combined data saved to {combined_data_path}")
 
