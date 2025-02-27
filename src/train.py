@@ -12,10 +12,10 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from mlflow.models.signature import infer_signature
-import argparse
 
 # Load training configuration from YAML file
-with open('/home/rutholasupo/2500_Labs/configs/train_config.yaml', 'r') as f:
+config_path = '/home/rutholasupo/2500_Labs/configs/train_config.yaml'
+with open(config_path, 'r') as f:
     config = yaml.safe_load(f)
 
 # Enable MLflow autologging
@@ -109,20 +109,36 @@ def train_model(data, start_year, n_lags, target, params):
         print(f"Model saved to {model_path}")
         print(f"Run ID: {run.info.run_id}")
 
+        # Update the configuration with the latest run_id and parameters
+        config['run_id'] = run.info.run_id
+        config['start_year'] = start_year
+        config['n_lags'] = n_lags
+        config['target'] = target
+        config['model_params'] = params
+
+        # Save the updated configuration back to the YAML file
+        with open(config_path, 'w') as f:
+            yaml.safe_dump(config, f)
+
     return pipeline, metrics
 
 def main():
-    parser = argparse.ArgumentParser(description="Train a RandomForest model.")
-    parser.add_argument('--start_year', type=int, default=config['start_year'], help='Start year for training data')
-    parser.add_argument('--n_lags', type=int, default=config['n_lags'], help='Number of lags to create')
-    parser.add_argument('--target', type=str, default=config['target'], help='Target variable for prediction')
-    parser.add_argument('--n_estimators', type=int, default=config['model_params']['n_estimators'], help='Number of trees in the forest')
-    parser.add_argument('--max_depth', type=int, default=config['model_params']['max_depth'], help='Maximum depth of the tree')
-    args = parser.parse_args()
+    # Prompt the user for input parameters
+    start_year = input(f"Enter start year for training data (default: {config['start_year']}): ") or config['start_year']
+    n_lags = input(f"Enter number of lags to create (default: {config['n_lags']}): ") or config['n_lags']
+    target = input(f"Enter target variable for prediction (default: {config['target']}): ") or config['target']
+    n_estimators = input(f"Enter number of trees in the forest (default: {config['model_params']['n_estimators']}): ") or config['model_params']['n_estimators']
+    max_depth = input(f"Enter maximum depth of the tree (default: {config['model_params']['max_depth']}): ") or config['model_params']['max_depth']
+
+    # Convert input parameters to the correct types
+    start_year = int(start_year)
+    n_lags = int(n_lags)
+    n_estimators = int(n_estimators)
+    max_depth = int(max_depth)
 
     params = {
-        'n_estimators': args.n_estimators,
-        'max_depth': args.max_depth
+        'n_estimators': n_estimators,
+        'max_depth': max_depth
     }
 
     # Run the load_data.py script
@@ -145,7 +161,7 @@ def main():
     combined_df.to_csv(combined_data_path, index=False)
     print(f"Combined data saved to {combined_data_path}")
 
-    model, metrics = train_model(combined_df, args.start_year, args.n_lags, args.target, params)
+    model, metrics = train_model(combined_df, start_year, n_lags, target, params)
     print("Model training complete and saved.")
     print("Metrics:\n", metrics)
 

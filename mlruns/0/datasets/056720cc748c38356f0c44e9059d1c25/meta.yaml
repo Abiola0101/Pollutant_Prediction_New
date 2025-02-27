@@ -1,0 +1,67 @@
+digest: afa926f1
+name: dataset
+profile: '{"num_rows": 1, "num_elements": 68}'
+schema: '{"mlflow_colspec": [{"type": "double", "name": "Total_Release_Water_lag1",
+  "required": true}, {"type": "double", "name": "Total_Release_Water_lag2", "required":
+  true}, {"type": "double", "name": "Total_Release_Water_lag3", "required": true},
+  {"type": "double", "name": "Population_lag1", "required": true}, {"type": "double",
+  "name": "Population_lag2", "required": true}, {"type": "double", "name": "Population_lag3",
+  "required": true}, {"type": "double", "name": "Number_of_Employees_lag1", "required":
+  true}, {"type": "double", "name": "Number_of_Employees_lag2", "required": true},
+  {"type": "double", "name": "Number_of_Employees_lag3", "required": true}, {"type":
+  "double", "name": "Release_to_Air(Fugitive)_lag1", "required": true}, {"type": "double",
+  "name": "Release_to_Air(Fugitive)_lag2", "required": true}, {"type": "double", "name":
+  "Release_to_Air(Fugitive)_lag3", "required": true}, {"type": "double", "name": "Release_to_Air(Other_Non-Point)_lag1",
+  "required": true}, {"type": "double", "name": "Release_to_Air(Other_Non-Point)_lag2",
+  "required": true}, {"type": "double", "name": "Release_to_Air(Other_Non-Point)_lag3",
+  "required": true}, {"type": "double", "name": "Release_to_Air(Road dust)_lag1",
+  "required": true}, {"type": "double", "name": "Release_to_Air(Road dust)_lag2",
+  "required": true}, {"type": "double", "name": "Release_to_Air(Road dust)_lag3",
+  "required": true}, {"type": "double", "name": "Release_to_Air(Spills)_lag1", "required":
+  true}, {"type": "double", "name": "Release_to_Air(Spills)_lag2", "required": true},
+  {"type": "double", "name": "Release_to_Air(Spills)_lag3", "required": true}, {"type":
+  "double", "name": "Release_to_Air(Stack/Point)_lag1", "required": true}, {"type":
+  "double", "name": "Release_to_Air(Stack/Point)_lag2", "required": true}, {"type":
+  "double", "name": "Release_to_Air(Stack/Point)_lag3", "required": true}, {"type":
+  "double", "name": "Release_to_Air(Storage/Handling)_lag1", "required": true}, {"type":
+  "double", "name": "Release_to_Air(Storage/Handling)_lag2", "required": true}, {"type":
+  "double", "name": "Release_to_Air(Storage/Handling)_lag3", "required": true}, {"type":
+  "double", "name": "Releases_to_Land(Leaks)_lag1", "required": true}, {"type": "double",
+  "name": "Releases_to_Land(Leaks)_lag2", "required": true}, {"type": "double", "name":
+  "Releases_to_Land(Leaks)_lag3", "required": true}, {"type": "double", "name": "Releases_to_Land(Other)_lag1",
+  "required": true}, {"type": "double", "name": "Releases_to_Land(Other)_lag2", "required":
+  true}, {"type": "double", "name": "Releases_to_Land(Other)_lag3", "required": true},
+  {"type": "double", "name": "Releases_to_Land(Spills)_lag1", "required": true}, {"type":
+  "double", "name": "Releases_to_Land(Spills)_lag2", "required": true}, {"type": "double",
+  "name": "Releases_to_Land(Spills)_lag3", "required": true}, {"type": "double", "name":
+  "Sum_of_release_to_all_media_(<1tonne)_lag1", "required": true}, {"type": "double",
+  "name": "Sum_of_release_to_all_media_(<1tonne)_lag2", "required": true}, {"type":
+  "double", "name": "Sum_of_release_to_all_media_(<1tonne)_lag3", "required": true},
+  {"type": "long", "name": "PROVINCE_BC", "required": true}, {"type": "long", "name":
+  "PROVINCE_MB", "required": true}, {"type": "long", "name": "PROVINCE_NB", "required":
+  true}, {"type": "long", "name": "PROVINCE_NL", "required": true}, {"type": "long",
+  "name": "PROVINCE_NS", "required": true}, {"type": "long", "name": "PROVINCE_NT",
+  "required": true}, {"type": "long", "name": "PROVINCE_NU", "required": true}, {"type":
+  "long", "name": "PROVINCE_ON", "required": true}, {"type": "long", "name": "PROVINCE_PE",
+  "required": true}, {"type": "long", "name": "PROVINCE_QC", "required": true}, {"type":
+  "long", "name": "PROVINCE_SK", "required": true}, {"type": "long", "name": "PROVINCE_YT",
+  "required": true}, {"type": "double", "name": "City", "required": true}, {"type":
+  "double", "name": "Facility_Name/Installation", "required": true}, {"type": "double",
+  "name": "NAICS Title/Titre_Code_SCIAN", "required": true}, {"type": "double", "name":
+  "NAICS/Code_SCIAN", "required": true}, {"type": "double", "name": "Company_Name/D\u00e9nomination_sociale_de_l''entreprise",
+  "required": true}, {"type": "long", "name": "Estimation_Method_C - Mass Balance",
+  "required": true}, {"type": "long", "name": "Estimation_Method_E - Emission Factor",
+  "required": true}, {"type": "long", "name": "Estimation_Method_E1 - Site Specific
+  Emission Factors", "required": true}, {"type": "long", "name": "Estimation_Method_E2
+  - Published Emission Factors", "required": true}, {"type": "long", "name": "Estimation_Method_M
+  - Monitoring or Direct Measurement", "required": true}, {"type": "long", "name":
+  "Estimation_Method_M1 - Continuous Emission Monitoring", "required": true}, {"type":
+  "long", "name": "Estimation_Method_M2 - Predictive Emission Monitoring", "required":
+  true}, {"type": "long", "name": "Estimation_Method_M3 - Source Testing", "required":
+  true}, {"type": "long", "name": "Estimation_Method_NI - No Information Available",
+  "required": true}, {"type": "long", "name": "Estimation_Method_O - Engineering Estimates",
+  "required": true}, {"type": "long", "name": "Estimation_Method_SP - Speciation profile",
+  "required": true}, {"type": "long", "name": "Region", "required": true}]}'
+source: '{"tags": {"mlflow.user": "rutholasupo", "mlflow.source.name": "src/train.py",
+  "mlflow.source.type": "LOCAL", "mlflow.source.git.commit": "b8dda1e9358801df2a54efae11c4fa7d230ef42a"}}'
+source_type: code
