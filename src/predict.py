@@ -2,6 +2,10 @@ import pandas as pd
 import pickle
 import numpy as np
 import category_encoders as ce
+import mlflow.sklearn
+import numpy as np
+import category_encoders as ce
+import yaml
 
 def forecast_future_years_with_metrics(data, start_year, end_year, n_lags=5, target='Total_Release_Water', model=None):
     def create_lags_no_group(df, feature, n_lags):
@@ -57,18 +61,28 @@ def forecast_future_years_with_metrics(data, start_year, end_year, n_lags=5, tar
     return future_forecasts
 
 def main():
-    # Load the trained model
-    with open('/home/rutholasupo/2500_Labs/model/random_forest_model.pkl', 'rb') as f:
-        model = pickle.load(f)
+    # Load training configuration from YAML file
+    config_path = '/home/rutholasupo/2500_Labs/configs/train_config.yaml'
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+
+    # Use the run_id from the training process
+    run_id = config['run_id']
+    model_uri = f"runs:/{run_id}/model"
+    model = mlflow.sklearn.load_model(model_uri)
 
     # Load the feature-engineered dataset
     data_path = "/home/rutholasupo/2500_Labs/data/processed/combined_data.csv"
     combined_df = pd.read_csv(data_path)
 
-    start_year = 2020
-    end_year = 2023
-    n_lags = 5
-    target = 'Total_Release_Water'
+    # Use parameters from the training configuration
+    start_year = config['start_year']
+    n_lags = config['n_lags']
+    target = config['target']
+
+    # Prompt the user for the end year
+    end_year = input(f"Enter end year for forecasting (default: 2023): ") or 2023
+    end_year = int(end_year)
 
     # Run forecasting
     forecasts = forecast_future_years_with_metrics(combined_df, start_year, end_year, n_lags, target, model)

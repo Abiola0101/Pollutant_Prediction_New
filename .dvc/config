@@ -1,0 +1,7 @@
+[core]
+    autostage = true
+    remote = prediction_remote
+['remote "prediction_remote"']
+    url = gdrive://1IztL0wiUBXnQbdnjoSKE46TWnzfy-qCE
+    gdrive_client_id = 508427473623-gsapjkuaphu1o8prce1tli7qrnph7dob.apps.googleusercontent.com
+    gdrive_client_secret = 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

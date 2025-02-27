@@ -1,0 +1,15 @@
+artifact_uri: file:///home/rutholasupo/2500_Labs/mlruns/0/a219074a30d94223983badf9f797146a/artifacts
+end_time: 1740638883230
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: a219074a30d94223983badf9f797146a
+run_name: rare-lynx-121
+run_uuid: a219074a30d94223983badf9f797146a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1740638842939
+status: 3
+tags: []
+user_id: rutholasupo

@@ -1,0 +1,7 @@
+model_params:
+  max_depth: 15
+  n_estimators: 250
+n_lags: 5
+run_id: a219074a30d94223983badf9f797146a
+start_year: 2020
+target: Total_Release_Water
