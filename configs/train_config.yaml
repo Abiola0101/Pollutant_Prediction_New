@@ -1,10 +1,11 @@
 combined_data_path: data/processed/combined_data.csv
 model_directory: model
+model_filename: random_forest_model.pkl
 model_params:
   max_depth: 15
   n_estimators: 250
 n_lags: 4
-run_id: 24e2d25e463b4f22b98d6932d3b93f68
+run_id: a248aef3d5844db9a56b32f2e6d822cc
 start_year: 2020
 target: Total_Release_Water
 test_path: data/processed/test_processed.csv
