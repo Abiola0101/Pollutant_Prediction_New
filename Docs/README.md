@@ -49,6 +49,16 @@ pyyaml
 5. **Install dependencies**
 pip install -r requirements.txt
  
-6. **Run the script**
-python src/train.py
+6. **Run the training script**
+python src/train.py --config configs/train_config.yaml
+
+7. Viewing MLflow Metrics
+   - **Start the MLflow tracking server**
+      mlflow ui
+   - **Open the MLflow UI: Open your web browser and navigate to http://localhost:5000 (or the specified port if different).**
+   - **Open the MLflow UI: Open your web browser and navigate to http://localhost:5000 (or the specified port if different).**
+
+8. Running Predictions
+   - **Run the prediction script**
+      python src/predict.py --config configs/train_config.yaml --combined_data_path data/processed/combined_data.csv --end_year 2023
  
