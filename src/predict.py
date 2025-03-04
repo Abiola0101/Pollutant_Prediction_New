@@ -71,41 +71,20 @@ class ModelPredictor:
 
         return future_forecasts
 
-#     def main(self):
-#         data_path = self.config['combined_data_path']
-#         combined_df = pd.read_csv(data_path)
-
-#         start_year = self.config['start_year']
-#         n_lags = self.config['n_lags']
-#         target = self.config['target']
-
-#         end_year = input(f"Enter end year for forecasting (default: 2023): ") or 2023
-#         end_year = int(end_year)
-
-#         forecasts = self.forecast_future_years_with_metrics(combined_df, start_year, end_year, n_lags, target)
-#         print("Forecasts:\n", forecasts)
-
-# if __name__ == "__main__":
-#     predictor = ModelPredictor('/home/rutholasupo/2500_Labs/configs/train_config.yaml')
-#     predictor.main()
-
-    def main(self, combined_data_path, end_year):
-        combined_df = pd.read_csv(combined_data_path)
+    def main(self):
+        data_path = self.config['combined_data_path']
+        combined_df = pd.read_csv(data_path)
 
         start_year = self.config['start_year']
         n_lags = self.config['n_lags']
         target = self.config['target']
 
+        end_year = input(f"Enter end year for forecasting (default: 2023): ") or 2023
+        end_year = int(end_year)
+
         forecasts = self.forecast_future_years_with_metrics(combined_df, start_year, end_year, n_lags, target)
         print("Forecasts:\n", forecasts)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Predict future metrics using a trained model.")
-    parser.add_argument('--config', type=str, required=True, help='Path to the configuration file.')
-    parser.add_argument('--combined_data_path', type=str, required=True, help='Path to the combined data file.')
-    parser.add_argument('--end_year', type=int, required=True, help='End year for forecasting.')
-
-    args = parser.parse_args()
-
-    predictor = ModelPredictor(args.config)
-    predictor.main(args.combined_data_path, args.end_year)
+    predictor = ModelPredictor('/home/rutholasupo/2500_Labs/configs/train_config.yaml')
+    predictor.main()

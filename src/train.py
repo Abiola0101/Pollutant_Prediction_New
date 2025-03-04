@@ -79,12 +79,14 @@ class ModelTrainer:
             'R² Score': r2_score(y_test, y_pred)
         }
 
-        # Model save path from config
-        model_directory = self.config['model_directory']
+        # Ensure the model is saved inside the project folder
+        model_directory = os.path.join(os.getcwd(), self.config['model_directory'])  
         model_filename = self.config['model_filename']
         model_path = os.path.join(model_directory, model_filename)
 
+        # Create the directory if it doesn't exist
         os.makedirs(model_directory, exist_ok=True)
+
 
         # Save the trained model
         with open(model_path, 'wb') as f:
