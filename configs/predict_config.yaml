@@ -1,4 +1,4 @@
-run_id: "your_mlflow_run_id"
+run_id: "bb9fc10b63b845c9a622097bd7eb2176"
 combined_data_path: "data/processed/combined_data.csv"
 start_year: 2020
 n_lags: 5

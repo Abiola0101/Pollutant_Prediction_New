@@ -1,11 +1,12 @@
 combined_data_path: data/processed/combined_data.csv
+mlflow_tracking_uri: mlruns
 model_directory: model
 model_filename: random_forest_model.pkl
 model_params:
   max_depth: 15
   n_estimators: 250
 n_lags: 4
-run_id: a248aef3d5844db9a56b32f2e6d822cc
+run_id: bb9fc10b63b845c9a622097bd7eb2176
 start_year: 2020
 target: Total_Release_Water
 test_path: data/processed/test_processed.csv
