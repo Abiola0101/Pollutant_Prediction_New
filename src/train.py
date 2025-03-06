@@ -29,7 +29,41 @@ class ModelTrainer:
             df[f'{feature}_lag{i}'] = df[feature].shift(i)
         return df
 
+    def get_or_create_experiment(self, experiment_name, artifact_location=None):
+        """
+        Returns the experiment_id. If experiment_name already exists,
+        uses it; otherwise creates a new experiment with the specified artifact_location.
+        """
+        existing_exp = mlflow.get_experiment_by_name(experiment_name)
+        if existing_exp is None:
+            # Create experiment with desired artifact location
+            experiment_id = mlflow.create_experiment(
+                name=experiment_name,
+                artifact_location=artifact_location
+            )
+            print(f"Created experiment '{experiment_name}' with ID {experiment_id}")
+        else:
+            # Already created, just reuse
+            experiment_id = existing_exp.experiment_id
+            print(f"Experiment '{experiment_name}' already exists with ID {experiment_id} at {existing_exp.artifact_location}")
+
+        mlflow.set_experiment(experiment_name)
+        return experiment_id
+
     def train_model(self, data, start_year, n_lags, target, params):
+        PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        MLFLOW_PATH = os.path.join(PROJECT_ROOT, 'mlruns/')
+        #mlflow.create_experiment('Pollutant Prediction', artifact_location=MLFLOW_PATH)
+        experiment_name = "Pollutant Prediction"
+        artifact_uri = MLFLOW_PATH
+
+        experiment_id = self.get_or_create_experiment(experiment_name, artifact_location=artifact_uri)
+        print(f"Using experiment_id: {experiment_id}")
+        
+        #mlflow.set_experiment("Pollutant Prediction")
+        #mlflow.entities.Experiment(artifact_location=MLFLOW_PATH)
+        mlflow.set_tracking_uri("http://127.0.0.1:5000/")
+        
         pollutants = [target]
         additional_features = [
             'Population', 'Number_of_Employees', 'Release_to_Air(Fugitive)', 'Release_to_Air(Other_Non-Point)',

@@ -2,6 +2,7 @@
 .vscode/
 .2500_Labs/
 .venv/
+venv/
 
 # Python-specific ignores
 __pycache__/
