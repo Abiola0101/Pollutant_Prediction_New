@@ -85,6 +85,15 @@ class ModelPredictor:
         forecasts = self.forecast_future_years_with_metrics(combined_df, start_year, end_year, n_lags, target)
         print("Forecasts:\n", forecasts)
 
+# if __name__ == "__main__":
+#     parser = argparse.ArgumentParser(description="Predict future metrics using a trained model.")
+#     parser.add_argument('--config', type=str, required=True, help='Path to the configuration file.')
+#     parser.add_argument('--combined_data_path', type=str, required=True, help='Path to the combined data file.')
+#     parser.add_argument('--end_year', type=int, required=True, help='End year for forecasting.')
+#     args = parser.parse_args()
+#     predictor = ModelPredictor(args.config)
+#     predictor.main(args.combined_data_path, args.end_year)
+
 if __name__ == "__main__":
     predictor = ModelPredictor('/home/rutholasupo/2500_Labs/configs/train_config.yaml')
     predictor.main()
