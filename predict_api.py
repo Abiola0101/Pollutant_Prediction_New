@@ -26,6 +26,20 @@ with open(CAT_NAMES_PATH, 'r') as f:
     cat_to_name = json.load(f)
 
 # load checkpoint
+def load_model(self):
+    checkpoint_path = self.config.get('checkpoint_path', None)
+    if checkpoint_path:
+        # Load from a local checkpoint .pkl file
+        with open(checkpoint_path, 'rb') as f:
+            model = pickle.load(f)
+        print(f"Model loaded from checkpoint: {checkpoint_path}")
+    else:
+        # Load from MLflow if no checkpoint path is provided
+        run_id = self.config['run_id']
+        model_uri = f"runs:/{run_id}/model"
+        model = mlflow.sklearn.load_model(model_uri)
+        print(f"Model loaded from MLflow run ID: {run_id}")
+    return model
 
 
 
@@ -99,31 +113,43 @@ def health_check():
     return jsonify(health)
 
 
-    # return "Predictor is healthy"
-
 @app.route('/v1/predict', methods=['POST'])
 def predict_v1():
-    # get the data from the POST request
-    if not request.json:
-        return "No data provided"
-    data = request.json
+    # Get the JSON data from the request
+    data = request.get_json()
 
-    if 'data' not in data:
-        return "No data provided"
-    
-    data = data['data']
-    start_year = data['start_year']
-    end_year = data['end_year']
-    n_lags = data['n_lags']
-    target = data['target']
+    # Check if the data is correctly received
+    if data is None:
+        return jsonify({"error": "No JSON data provided"}), 400
 
-    result = forecast_future_years_with_metrics(data, start_year, end_year, n_lags=5, target='Total_Release_Water')
+    # Extract parameters
+    start_year = data.get('start_year')
+    end_year = data.get('end_year')
+    n_lags = data.get('n_lags')
+    target = data.get('target')
 
+    # Debugging: Print data to verify if it's being received correctly
+    print("Received data:", data)
+
+    # Ensure that 'end_year' is provided
+    if end_year is None:
+        return jsonify({"error": "Missing 'end_year' parameter"}), 400
+
+    # Call the forecast function (replace with actual function)
+    # result = forecast_future_years_with_metrics(data, start_year, end_year, n_lags=n_lags, target=target)
+
+    # For testing purposes, return the extracted values
     return jsonify({
         "success": True,
-        "prediction": result
-
+        "start_year": start_year,
+        "end_year": end_year,
+        "n_lags": n_lags,
+        "target": target
     })
+
+if __name__ == '__main__':
+    app.run(debug=True, port=9999)
+
 
 
 @app.route('/v2/predict', methods=['POST'])
@@ -131,22 +157,6 @@ def predict_v2():
     # get the data from the POST request
     return "Nothing"
 
-
-
-    # # get the data from the POST request
-    # data = request.get_json(force=True)
-
-    # # convert data into dataframe
-    # data.update((x, [y]) for x, y in data.items())
-    # data_df = pd.DataFrame.from_dict(data)
-
-    # # make prediction
-    # future_forecasts = forecast_future_years_with_metrics(data_df, 2018, 2020)
-
-    # # convert prediction to list
-    # output = future_forecasts.to_dict(orient='records')
-
-    # return jsonify(output)
 
 
 if __name__ == '__main__':
