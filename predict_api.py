@@ -25,29 +25,38 @@ MODELS_DIR = os.path.join(PROJECT_PATH, 'models')
 with open(CAT_NAMES_PATH, 'r') as f:
     cat_to_name = json.load(f)
 
-# load checkpoint
-def load_model(self):
-    checkpoint_path = self.config.get('checkpoint_path', None)
-    if checkpoint_path:
-        # Load from a local checkpoint .pkl file
-        with open(checkpoint_path, 'rb') as f:
-            model = pickle.load(f)
-        print(f"Model loaded from checkpoint: {checkpoint_path}")
-    else:
-        # Load from MLflow if no checkpoint path is provided
-        run_id = self.config['run_id']
-        model_uri = f"runs:/{run_id}/model"
-        model = mlflow.sklearn.load_model(model_uri)
-        print(f"Model loaded from MLflow run ID: {run_id}")
-    return model
+# specify the model paths
+MODEL_V1_PATH = os.path.join(MODELS_DIR, 'RandomForest_random_forest_model.pkl')
+MODEL_V2_PATH = os.path.join(MODELS_DIR, 'GradientBoosting_random_forest_model.pkl')
 
+# Load models with error handling
+try:
+    with open(MODEL_V1_PATH, "rb") as f:
+        model_v1 = pickle.load(f)
+    print(f"RandomForest model loaded from {MODEL_V1_PATH}")
+except FileNotFoundError:
+    print(f"File not found: {MODEL_V1_PATH}")
+    model_v1 = None
 
+try:
+    with open(MODEL_V2_PATH, "rb") as f:
+        model_v2 = pickle.load(f)
+    print(f"GradientBoosting model loaded from {MODEL_V2_PATH}")
+except FileNotFoundError:
+    print(f"File not found: {MODEL_V2_PATH}")
+    model_v2 = None
 
-# specify the model path
-MODEL_V1_PATH = os.path.join(MODELS_DIR, 'random_forest_model.pkl')
-# MODEL_PATH = os.path.join(PROJECT_PATH, 'models/model.pkl')
+def create_lags_no_group(df, feature, n_lags):
+    if feature not in df.columns:
+        raise KeyError(f"Feature '{feature}' not found in DataFrame")
+    for i in range(1, n_lags + 1):
+        df[f'{feature}_lag{i}'] = df[feature].shift(i)
+    return df
 
-def forecast_future_years_with_metrics(self, data, start_year, end_year, n_lags=5, target='Total_Release_Water'):
+def forecast_future_years_with_metrics(data, start_year, end_year, n_lags=5, target='Total_Release_Water'):
+    if target not in data.columns:
+        raise KeyError(f"Target '{target}' not found in DataFrame")
+    
     pollutants = [target]
     additional_features = [
         'Population', 'Number_of_Employees', 'Release_to_Air(Fugitive)', 'Release_to_Air(Other_Non-Point)', 
@@ -57,20 +66,20 @@ def forecast_future_years_with_metrics(self, data, start_year, end_year, n_lags=
     ]
     
     for feature in pollutants + additional_features:
-        data = self.create_lags_no_group(data, feature, n_lags)
+        data = create_lags_no_group(data, feature, n_lags)
     
     data = data.dropna()
     province_encoded = pd.get_dummies(data['PROVINCE'], prefix='PROVINCE', drop_first=True, dtype=int)
     data = pd.concat([data, province_encoded], axis=1)
-    estimation_encoded = pd.get_dummies(data['Estimation_Method/Méthode_destimation'], prefix='Estimation_Method', drop_first=True, dtype=int)
+    estimation_encoded = pd.get_dummies(data['Estimation_Method/Méthode destimation'], prefix='Estimation_Method', drop_first=True, dtype=int)
     data = pd.concat([data, estimation_encoded], axis=1)
 
-    encoder = ce.TargetEncoder(cols=['City', 'Facility_Name/Installation', 'NAICS Title/Titre_Code_SCIAN', 'NAICS/Code_SCIAN', "Company_Name/Dénomination_sociale_de_l'entreprise"])
+    encoder = ce.TargetEncoder(cols=['City', 'Facility_Name/Installation', 'NAICS Title/Titre_Code_SCIAN', 'NAICS/Code_SCIAN', "Company_Name/Dénomination sociale de l'entreprise"])
     data = encoder.fit_transform(data, data[target])
 
     features = [f'{pollutant}_lag{i}' for pollutant in pollutants for i in range(1, n_lags + 1)] + \
                [f'{feature}_lag{i}' for feature in additional_features for i in range(1, n_lags + 1)] + \
-               list(province_encoded.columns) + ['City', 'Facility_Name/Installation', 'NAICS Title/Titre_Code_SCIAN', 'NAICS/Code_SCIAN', "Company_Name/Dénomination_sociale_de_l'entreprise"] + \
+               list(province_encoded.columns) + ['City', 'Facility_Name/Installation', 'NAICS Title/Titre_Code_SCIAN', 'NAICS/Code_SCIAN', "Company_Name/Dénomination sociale de l'entreprise"] + \
                list(estimation_encoded.columns)
 
     if 'Region' in data.columns:
@@ -83,7 +92,7 @@ def forecast_future_years_with_metrics(self, data, start_year, end_year, n_lags=
             continue
         latest_data['Reporting_Year/Année'] = year
         forecast_features = latest_data[features]
-        latest_data[target] = self.model.predict(forecast_features)
+        latest_data[target] = model_v1.predict(forecast_features)  # Use model_v1 or model_v2 as needed
         yearly_forecast = latest_data.groupby('PROVINCE')[[target]].sum()
         yearly_forecast['Year'] = year
         future_forecasts.append(yearly_forecast)
@@ -98,20 +107,15 @@ def forecast_future_years_with_metrics(self, data, start_year, end_year, n_lags=
 # create decorator with specific routes, to find specific things required for code to run
 @app.route('/predictor_home', methods=['GET'])
 def home():
-
     return "Welcome to the predictor home page"
-    # return "Welcome to the predictor home page"
-
 
 @app.route('/health_status', methods=['GET'])
 def health_check():
-
-    health ={
-        "health_status": "runing",
+    health = {
+        "health_status": "running",
         "message": "pollution predictor is running"
     }
     return jsonify(health)
-
 
 @app.route('/v1/predict', methods=['POST'])
 def predict_v1():
@@ -135,29 +139,21 @@ def predict_v1():
     if end_year is None:
         return jsonify({"error": "Missing 'end_year' parameter"}), 400
 
-    # Call the forecast function (replace with actual function)
-    # result = forecast_future_years_with_metrics(data, start_year, end_year, n_lags=n_lags, target=target)
+    try:
+        # Call the forecast function
+        result = forecast_future_years_with_metrics(data, start_year, end_year, n_lags=n_lags, target=target)
+    except KeyError as e:
+        return jsonify({"success": False, "error": str(e)})
 
-    # For testing purposes, return the extracted values
     return jsonify({
         "success": True,
-        "start_year": start_year,
-        "end_year": end_year,
-        "n_lags": n_lags,
-        "target": target
+        "prediction": result.to_dict()
     })
-
-if __name__ == '__main__':
-    app.run(debug=True, port=9999)
-
-
 
 @app.route('/v2/predict', methods=['POST'])
 def predict_v2():
     # get the data from the POST request
     return "Nothing"
 
-
-
 if __name__ == '__main__':
-    app.run(host= '127.0.0.1', port = '9999', debug = True)
+    app.run(host='127.0.0.1', port=9999, debug=True)
