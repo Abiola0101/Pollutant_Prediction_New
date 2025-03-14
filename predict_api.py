@@ -47,16 +47,11 @@ except FileNotFoundError:
     model_v2 = None
 
 def create_lags_no_group(df, feature, n_lags):
-    if feature not in df.columns:
-        raise KeyError(f"Feature '{feature}' not found in DataFrame")
     for i in range(1, n_lags + 1):
         df[f'{feature}_lag{i}'] = df[feature].shift(i)
     return df
 
 def forecast_future_years_with_metrics(data, start_year, end_year, n_lags=5, target='Total_Release_Water'):
-    if target not in data.columns:
-        raise KeyError(f"Target '{target}' not found in DataFrame")
-    
     pollutants = [target]
     additional_features = [
         'Population', 'Number_of_Employees', 'Release_to_Air(Fugitive)', 'Release_to_Air(Other_Non-Point)', 
@@ -139,11 +134,8 @@ def predict_v1():
     if end_year is None:
         return jsonify({"error": "Missing 'end_year' parameter"}), 400
 
-    try:
-        # Call the forecast function
-        result = forecast_future_years_with_metrics(data, start_year, end_year, n_lags=n_lags, target=target)
-    except KeyError as e:
-        return jsonify({"success": False, "error": str(e)})
+    # Call the forecast function
+    result = forecast_future_years_with_metrics(data, start_year, end_year, n_lags=n_lags, target=target)
 
     return jsonify({
         "success": True,

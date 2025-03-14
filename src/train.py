@@ -1,6 +1,6 @@
 import argparse
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
@@ -53,15 +53,12 @@ class ModelTrainer:
     def train_model(self, data, start_year, n_lags, target, params):
         PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         MLFLOW_PATH = os.path.join(PROJECT_ROOT, 'mlruns/')
-        #mlflow.create_experiment('Pollutant Prediction', artifact_location=MLFLOW_PATH)
         experiment_name = "Pollutant Prediction"
         artifact_uri = MLFLOW_PATH
 
         experiment_id = self.get_or_create_experiment(experiment_name, artifact_location=artifact_uri)
         print(f"Using experiment_id: {experiment_id}")
         
-        #mlflow.set_experiment("Pollutant Prediction")
-        #mlflow.entities.Experiment(artifact_location=MLFLOW_PATH)
         mlflow.set_tracking_uri("http://127.0.0.1:5000/")
         
         pollutants = [target]
@@ -102,38 +99,16 @@ class ModelTrainer:
         X_test = test_data[features]
         y_test = test_data[target]
 
-        pipeline = Pipeline([('scaler', StandardScaler()), ('regressor', RandomForestRegressor(random_state=42, **(params if params else {})))])
-        pipeline.fit(X_train, y_train)
-
-        # Evaluate model performance
-        y_pred = pipeline.predict(X_test)
-        metrics = {
-            'Root Mean Squared Error': np.sqrt(mean_squared_error(y_test, y_pred)),
-            'Mean Absolute Error': mean_absolute_error(y_test, y_pred),
-            'R² Score': r2_score(y_test, y_pred)
+        models = {
+            'RandomForest': RandomForestRegressor(random_state=42, **(params if params else {})),
+            'GradientBoosting': GradientBoostingRegressor(random_state=42, **(params if params else {}))
         }
 
-        # Ensure the model is saved inside the project folder
-        model_directory = os.path.join(os.getcwd(), self.config['model_directory'])  
-        model_filename = self.config['model_filename']
-        model_path = os.path.join(model_directory, model_filename)
-
-        # Create the directory if it doesn't exist
-        os.makedirs(model_directory, exist_ok=True)
-
-
-        # Save the trained model
-        with open(model_path, 'wb') as f:
-            pickle.dump(pipeline, f)
-
-        print(f"Model saved to {model_path}")
-
-        with mlflow.start_run() as run:
-            mlflow.log_params(params)
-
+        for model_name, model in models.items():
+            pipeline = Pipeline([('scaler', StandardScaler()), ('regressor', model)])
             pipeline.fit(X_train, y_train)
 
-            # Evaluate model performance on the test set
+            # Evaluate model performance
             y_pred = pipeline.predict(X_test)
             metrics = {
                 'Root Mean Squared Error': np.sqrt(mean_squared_error(y_test, y_pred)),
@@ -141,33 +116,56 @@ class ModelTrainer:
                 'R² Score': r2_score(y_test, y_pred)
             }
 
-            # Log metrics in MLflow
-            for metric, value in metrics.items():
-                mlflow.log_metric(metric, value)
+            # Ensure the model is saved inside the project folder
+            model_directory = os.path.join(os.getcwd(), self.config['model_directory'])  
+            model_filename = f"{model_name}_{self.config['model_filename']}"
+            model_path = os.path.join(model_directory, model_filename)
 
-            # Log the trained model
-            input_example = X_train.head(1)
-            signature = infer_signature(X_train, y_train)
-            mlflow.sklearn.log_model(pipeline, artifact_path="model", input_example=input_example, signature=signature)
+            # Create the directory if it doesn't exist
+            os.makedirs(model_directory, exist_ok=True)
 
-            # Save model locally
+            # Save the trained model
             with open(model_path, 'wb') as f:
                 pickle.dump(pipeline, f)
 
-            print(f"Model saved to {model_path}")
-            print(f"Run ID: {run.info.run_id}")
+            print(f"{model_name} model saved to {model_path}")
 
-            # Update config with run details
-            self.config['run_id'] = run.info.run_id
-            self.config['start_year'] = start_year
-            self.config['n_lags'] = n_lags
-            self.config['target'] = target
-            self.config['model_params'] = params
+            with mlflow.start_run() as run:
+                mlflow.log_params(params)
+
+                pipeline.fit(X_train, y_train)
+
+                # Evaluate model performance on the test set
+                y_pred = pipeline.predict(X_test)
+                metrics = {
+                    'Root Mean Squared Error': np.sqrt(mean_squared_error(y_test, y_pred)),
+                    'Mean Absolute Error': mean_absolute_error(y_test, y_pred),
+                    'R² Score': r2_score(y_test, y_pred)
+                }
+
+                # Log metrics in MLflow
+                for metric, value in metrics.items():
+                    mlflow.log_metric(metric, value)
+
+                # Log the trained model
+                input_example = X_train.head(1)
+                signature = infer_signature(X_train, y_train)
+                mlflow.sklearn.log_model(pipeline, artifact_path="model", input_example=input_example, signature=signature)
+
+                # Save model locally
+                with open(model_path, 'wb') as f:
+                    pickle.dump(pipeline, f)
+
+                print(f"{model_name} model saved to {model_path}")
+                print(f"Run ID: {run.info.run_id}")
+
+                # Update config with run details
+                self.config[f'{model_name}_run_id'] = run.info.run_id
 
             with open(self.config_path, 'w') as f:
                 yaml.safe_dump(self.config, f)
 
-        return pipeline, metrics
+        return models, metrics
 
     def main(self):
         # Load dataset paths from config
@@ -190,7 +188,7 @@ class ModelTrainer:
         target = self.config['target']
         params = self.config['model_params']
 
-        model, metrics = self.train_model(combined_df, start_year, n_lags, target, params)
+        models, metrics = self.train_model(combined_df, start_year, n_lags, target, params)
         print("Model training complete and saved.")
         print("Metrics:\n", metrics)
 
