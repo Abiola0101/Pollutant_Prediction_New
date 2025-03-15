@@ -113,7 +113,88 @@ class ModelPredictor:
 # Flask routes
 @app.route('/predictor_home', methods=['GET'])
 def home():
-    return "Welcome to the predictor home page"
+    app_info = {
+        "API_Name": "Pollutant predictor",
+        "API Description": "This API takes parameters from user and returns a prediction of amount of pollutants",
+        "version": "v1.0",
+        "endpoints": {
+            "/predictor_home": "Home page",
+            "/health_status": "Displays the health status of the API",
+            "v1/predict": "This version of API is based on RandomForest model",
+            "v2/predict": "This version of API is based on GradientBoost model"
+        },
+        "Input format": {
+            "start_year": 2020,
+            "end_year": 2023,
+            "n_lags": 4,
+            "target": "Total_Release_Water",
+            "data": [
+                {
+                    "PROVINCE": "SomeProvince",
+                    "City": "SomeCity",
+                    "Facility_Name/Installation": "SomeFacility",
+                    "Total_Release_Water": 1000,
+                    "Population": 100000,
+                    "Number_of_Employees": 500,
+                    "Release_to_Air(Fugitive)": 200
+                },
+                {
+                    "PROVINCE": "AnotherProvince",
+                    "City": "AnotherCity",
+                    "Facility_Name/Installation": "AnotherFacility",
+                    "Total_Release_Water": 1500,
+                    "Population": 120000,
+                    "Number_of_Employees": 600,
+                    "Release_to_Air(Fugitive)": 250
+                }
+            ]
+        },
+        "example request": {
+            'curl -X POST "http://127.0.0.1:5050/v1/predict" \\': '',
+            '-H "Content-Type: application/json" \\': '',
+            '-d \'{': '',
+            '"start_year": 2023,': '',
+            '"end_year": 2023,': '',
+            '"n_lags": 2,': '',
+            '"target": "Total_Release_Water",': '',
+            '"data": [': '',
+            '{': '',
+            '"Reporting_Year/Année": 2022,': '',
+            '"Population": 50000,': '',
+            '"Number_of_Employees": 100,': '',
+            '"Release_to_Air(Fugitive)": 120.5,': '',
+            '"Release_to_Air(Other_Non-Point)": 60.2,': '',
+            '"Release_to_Air(Road dust)": 24,': '',
+            '"Release_to_Air(Spills)": 110.2,': '',
+            '"Release_to_Air(Stack/Point)": 16.5,': '',
+            '"Release_to_Air(Storage/Handling)": 45.2,': '',
+            '"Releases_to_Land(Leaks)": 111.2,': '',
+            '"Releases_to_Land(Other)": 24,': '',
+            '"Releases_to_Land(Spills)": 36,': '',
+            '"Sum_of_release_to_all_media_(<1tonne)": 16.6,': '',
+            '"PROVINCE": "ON",': '',
+            '"Estimation_Method/Méthode destimation": "Calculated",': '',
+            '"City": "Toronto",': '',
+            '"Facility_Name/Installation": "ABC Plant",': '',
+            '"NAICS Title/Titre_Code_SCIAN": "Chemical Manufacturing",': '',
+            '"NAICS/Code_SCIAN": 325110,': '',
+            '"Company_Name/Dénomination sociale de l\'entreprise": "XYZ Corp"': '',
+            '}': '',
+            ']': '',
+            '}\'': ''
+        },
+        "example response": {
+            "success": True,
+            "prediction": {
+                "PROVINCE": "ON",
+                "Total_Release_Water": 1000,
+                "Year": 2023
+            }
+        }
+    }
+
+    return jsonify(app_info)
+
 
 @app.route('/health_status', methods=['GET'])
 def health_check():
@@ -122,6 +203,7 @@ def health_check():
         "message": "pollution predictor is running"
     }
     return jsonify(health)
+
 
 @app.route('/v1/predict', methods=['POST'])
 def predict_v1():
