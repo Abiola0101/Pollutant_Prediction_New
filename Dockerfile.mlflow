@@ -1,0 +1,16 @@
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim
+
+# Set the working directory in the container
+WORKDIR /mlflow
+
+# Install dependencies
+RUN pip install --no-cache-dir \ 
+    mlflow==2.20.2 \
+    pymysql==1.1.0
+
+RUN mkdir -p /mlflow/artifacts
+
+EXPOSE 9000
+
+CMD ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000", "--backend-store-uri", "sqlite:///mlflow.db", "--default-artifact-root", "/mlflow/artifacts"]

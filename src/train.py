@@ -51,6 +51,9 @@ class ModelTrainer:
         return experiment_id
 
     def train_model(self, data, start_year, n_lags, target, params):
+        # Set the MLflow tracking URI
+        mlflow_tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000")
+        mlflow.set_tracking_uri(mlflow_tracking_uri)
         PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         MLFLOW_PATH = os.path.join(PROJECT_ROOT, 'mlruns/')
         experiment_name = "Pollutant Prediction"
@@ -59,7 +62,13 @@ class ModelTrainer:
         experiment_id = self.get_or_create_experiment(experiment_name, artifact_location=artifact_uri)
         print(f"Using experiment_id: {experiment_id}")
         
-        mlflow.set_tracking_uri("http://127.0.0.1:5000/")
+        #mlflow.set_tracking_uri('MLFLOW_TRACKING_URI', "http://127.0.0.1:5000/")
+        #mlflow_tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000")
+        #mlflow.set_tracking_uri(mlflow_tracking_uri)
+
+        mlflow_tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000")
+        mlflow.set_tracking_uri(mlflow_tracking_uri)
+        
         
         pollutants = [target]
         additional_features = [

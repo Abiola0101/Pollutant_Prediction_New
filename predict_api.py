@@ -25,8 +25,15 @@ with open(CAT_NAMES_PATH, 'r') as f:
 #MODEL_V1_PATH = os.path.join(MODELS_DIR, 'RandomForest_random_forest_model.pkl')
 #MODEL_V2_PATH = os.path.join(MODELS_DIR, 'GradientBoosting_random_forest_model.pkl')
 
-MODEL_V1_PATH = '/home/abi_norquest_ml/2500_Labs/model/RandomForest_random_forest_model.pkl'
-MODEL_V2_PATH = '/home/abi_norquest_ml/2500_Labs/model/GradientBoosting_random_forest_model.pkl'
+#MODEL_V1_PATH = '/home/abi_norquest_ml/2500_Labs/model/RandomForest_random_forest_model.pkl'
+#MODEL_V2_PATH = '/home/abi_norquest_ml/2500_Labs/model/GradientBoosting_random_forest_model.pkl'
+
+
+#MODEL_V1_PATH = '/home/abiola/Pollutant_Prediction_New/model/RandomForest_random_forest_model.pkl'
+#MODEL_V2_PATH = '/home/abiola/Pollutant_Prediction_New/model/GradientBoosting_random_forest_model.pkl'
+
+MODEL_V1_PATH = '/app/model/RandomForest_random_forest_model.pkl'
+MODEL_V2_PATH = '/app/model/GradientBoosting_random_forest_model.pkl'
 
 
 # Load models
@@ -282,4 +289,4 @@ if __name__ == '__main__':
     app.config['COMBINED_DATA_PATH'] = args.combined_data_path
     app.config['END_YEAR'] = args.end_year
 
-    app.run(host='127.0.0.1', port=9999, debug=True)
+    app.run(host='0.0.0.0', port=9000, debug=True)
