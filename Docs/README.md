@@ -11,16 +11,39 @@ Ruth Olasupo
  
  
 ## Project Description:
-This assignment is to showcase steps to deploy already developed ML model for NPRI pollution data into production.
-1. Utilize GitHub as a central repository to manage code, track changes, and facilitate collaboration among team members.
-2. Implement Data Version Control (DVC) to version datasets and machine learning models efficiently. DVC integrates with Git to handle large files, enabling reproducibility and easy sharing of data and model versions.
-3. Use the Google API Console to configure remote storage solutions, such as Google Drive, ensuring secure and scalable storage for data files.
+This assignment is to showcase steps to containerize pollution prediction app using Docker desktop. Containerization offers several key advantages for deploying machine learning models in that it allows for:
+
+- **Reproducibility**: Ensures a consistent environment across development, testing, and production phases.
+- **Portability**: Allows your application to run reliably on any platform that supports Docker.
+- **Isolation**: Keeps dependencies and configurations separate from the underlying host system.
+- **Scalability**: Simplifies the process of scaling your application in production environments.
+- **Versioning**: Enables version control for the entire application environment, beyond just the code. 
+
+
+
+1. Create Dockerfile for ML application
+
+- Dockerfile.mlapp 
+
+2. Create Dockerfile for MLflow
+
+- Dockerfile.mlflow 
+
+3. Create Docker Compose file (.yml)
+
+- docker-compose.yml
+
+The docker compose file is necessary for:
+1. **Service Orchestration**: Manages startup order (ensuring MLflow is running before your ML app)
+2. **Networking**: Creates an internal network allowing containers to communicate
+3. **Configuration Management**: Centralizes environment variables and port mappings
+4. **Volume Management**: Simplifies mounting directories for data persistence
+
+
+
 4. Employ MLflow to track experiments, record model parameters, and monitor performance metrics, facilitating continuous evaluation and improvement of the deployed model
  
 ## To implement the project:
- 
-# Model Training Script
- This repository contains a script for training a machine learning model using a RandomForestRegressor.
  
 ## Setup Instructions
  
@@ -49,17 +72,12 @@ pyyaml
 5. **Install dependencies**
 pip install -r requirements.txt
  
-6. **Run the training script**
-python src/train.py --config configs/train_config.yaml
+6. **Build the Docker image**
+
  
-7. Viewing MLflow Metrics
-   - **Start the MLflow tracking server**
-      mlflow ui
-   - **Open the MLflow UI: Open your web browser and navigate to http://localhost:5000 (or the specified port if different).**
-   - **Open the MLflow UI: Open your web browser and navigate to http://localhost:5000 (or the specified port if different).**
+7. 
  
-8. Running Predictions
-   - **Run the prediction script**
-      python src/predict.py --config configs/train_config.yaml --combined_data_path data/processed/combined_data.csv --end_year 2023
+8. 
+
  
  
