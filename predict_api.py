@@ -8,6 +8,26 @@ import json
 import argparse
 import pickle  # Import the pickle module
 from flask import Flask, jsonify, request
+import logging
+
+# Configure basic logging
+log_dir = os.environ.get('LOG_DIR', 'logs')
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+log_file = os.path.join(log_dir, 'app.log') 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),  # Log to console
+        logging.FileHandler('app.log')  # Log to file
+    ]
+)
+
+# Create a logger for a specific module
+logger = logging.getLogger(__name__)
+
 
 # Initialize Flask
 app = Flask(__name__)
@@ -29,22 +49,21 @@ with open(CAT_NAMES_PATH, 'r') as f:
 #MODEL_V2_PATH = '/home/abi_norquest_ml/2500_Labs/model/GradientBoosting_random_forest_model.pkl'
 
 
-#MODEL_V1_PATH = '/home/abiola/Pollutant_Prediction_New/model/RandomForest_random_forest_model.pkl'
-#MODEL_V2_PATH = '/home/abiola/Pollutant_Prediction_New/model/GradientBoosting_random_forest_model.pkl'
+MODEL_V1_PATH = '/home/abiola/Pollutant_Prediction_New/model/RandomForest_random_forest_model.pkl'
+MODEL_V2_PATH = '/home/abiola/Pollutant_Prediction_New/model/GradientBoosting_random_forest_model.pkl'
 
-MODEL_V1_PATH = '/app/model/RandomForest_random_forest_model.pkl'
-MODEL_V2_PATH = '/app/model/GradientBoosting_random_forest_model.pkl'
-
+#MODEL_V1_PATH = '/app/model/RandomForest_random_forest_model.pkl'
+#MODEL_V2_PATH = '/app/model/GradientBoosting_random_forest_model.pkl'
 
 # Load models
 def load_model(model_path):
     try:
         with open(model_path, "rb") as f:
             model = pickle.load(f)
-        print(f"Model loaded from {model_path}")
+        logger.info(f"Model loaded from {model_path}")
         return model
     except FileNotFoundError:
-        print(f"File not found: {model_path}")
+        logger.error(f"Model file not found: {model_path}")
         return None
 
 model_v1 = load_model(MODEL_V1_PATH)
@@ -55,6 +74,7 @@ class ModelPredictor:
         self.model = model
 
     def create_lags_no_group(self, df, feature, n_lags):
+        logger.debug(f"Creating {n_lags} lags for feature: {feature}")
         for i in range(1, n_lags + 1):
             df[f'{feature}_lag{i}'] = df[feature].shift(i)
         return df
@@ -214,35 +234,53 @@ def health_check():
 
 @app.route('/v1/predict', methods=['POST'])
 def predict_v1():
+    # Get the incoming data as JSON
     data = request.get_json()
 
-    if data is None:
+    # Check if the data is None (meaning no JSON data was provided)
+    if not data:
+        logger.error("No data provided in request")
         return jsonify({"error": "No JSON data provided"}), 400
 
-    # Extract parameters from input data
+    logger.info(f"Received prediction request (v1) with data: {data}")
+
+    # Extract parameters from the input data
     start_year = data.get('start_year')
     end_year = data.get('end_year')
-    n_lags = data.get('n_lags', 5)
+    n_lags = data.get('n_lags', 5)  # Default to 5 if not provided
     target = data.get('target', 'Total_Release_Water')
 
-    # Load data from the incoming request
-    df = pd.DataFrame(data['data'])
-
+    # Validate that 'end_year' is provided
     if not end_year:
+        logger.error("Missing 'end_year' parameter")
         return jsonify({"error": "Missing 'end_year' parameter"}), 400
 
-    # Instantiate model predictor with the RandomForest model
+    # Load the 'data' into a DataFrame for prediction
+    try:
+        df = pd.DataFrame(data['data'])
+    except KeyError:
+        logger.error("Data format is incorrect, 'data' key missing")
+        return jsonify({"error": "Invalid data format, 'data' key missing"}), 400
+
+    # Instantiate the ModelPredictor with the RandomForest model
     predictor = ModelPredictor(model=model_v1)
 
+    # Try to forecast future years and handle any exceptions
     try:
         result = predictor.forecast_future_years_with_metrics(df, start_year, end_year, n_lags, target)
     except KeyError as e:
-        return jsonify({"success": False, "error": str(e)})
+        logger.error(f"KeyError during prediction: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+    except Exception as e:
+        logger.error(f"Prediction failed: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
+    # Return the result as a JSON response
     return jsonify({
         "success": True,
         "prediction": result.to_dict()
     })
+
 
 @app.route('/v2/predict', methods=['POST'])
 def predict_v2():
@@ -289,4 +327,4 @@ if __name__ == '__main__':
     app.config['COMBINED_DATA_PATH'] = args.combined_data_path
     app.config['END_YEAR'] = args.end_year
 
-    app.run(host='0.0.0.0', port=9000, debug=True)
+    app.run(host='0.0.0.0', port=9001, debug=True)
