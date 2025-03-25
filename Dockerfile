@@ -20,10 +20,16 @@ COPY model /app/model
 
 RUN mkdir -p data/raw data/processed data/external
 
+# Create a logs directory in the container
+RUN mkdir -p /app/logs
+
+# Set an environment variable for log location
 ENV PYTHONPATH=/app
+
+ENV LOG_DIR=/app/logs
 
 ENV FLASK_APP=predict_api.py
 
-EXPOSE 9000
+EXPOSE 5001
 
 CMD ["python", "predict_api.py", "--config", "configs/train_config.yaml", "--combined_data_path", "data/processed/combined_data.csv", "--end_year", "2025"]
