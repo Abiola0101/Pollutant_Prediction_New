@@ -9,6 +9,22 @@ import argparse
 import pickle  # Import the pickle module
 from flask import Flask, jsonify, request
 import logging
+from prometheus_flask_exporter import PrometheusMetrics
+from prometheus_client import Counter, Histogram, Gauge
+import time
+from config import Config
+
+# Initialize Flask
+app = Flask(__name__)
+
+# Initialize Prometheus metrics after app is defined
+metrics = PrometheusMetrics(app)
+
+# Custom metrics
+prediction_requests = Counter('model_prediction_requests_total', 'Total number of prediction requests', ['model_version', 'status'])
+prediction_time = Histogram('model_prediction_duration_seconds', 'Time spent processing prediction', ['model_version'])
+memory_usage = Gauge('app_memory_usage_bytes', 'Memory usage of the application')
+cpu_usage = Gauge('app_cpu_usage_percent', 'CPU usage percentage of the application')
 
 # Configure basic logging
 log_dir = os.environ.get('LOG_DIR', 'logs')
@@ -28,10 +44,6 @@ logging.basicConfig(
 # Create a logger for a specific module
 logger = logging.getLogger(__name__)
 
-
-# Initialize Flask
-app = Flask(__name__)
-
 # Define absolute project path
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.path.join(PROJECT_PATH, 'models')
@@ -41,19 +53,12 @@ CAT_NAMES_PATH = os.path.join(PROJECT_PATH, 'configs/cat_to_name.json')
 with open(CAT_NAMES_PATH, 'r') as f:
     cat_to_name = json.load(f)
 
-# Specify the model paths (example models)
-#MODEL_V1_PATH = os.path.join(MODELS_DIR, 'RandomForest_random_forest_model.pkl')
-#MODEL_V2_PATH = os.path.join(MODELS_DIR, 'GradientBoosting_random_forest_model.pkl')
+# Load the configuration settings
+app.config.from_object(Config)
 
-#MODEL_V1_PATH = '/home/abi_norquest_ml/2500_Labs/model/RandomForest_random_forest_model.pkl'
-#MODEL_V2_PATH = '/home/abi_norquest_ml/2500_Labs/model/GradientBoosting_random_forest_model.pkl'
-
-
-MODEL_V1_PATH = '/home/abiola/Pollutant_Prediction_New/model/RandomForest_random_forest_model.pkl'
-MODEL_V2_PATH = '/home/abiola/Pollutant_Prediction_New/model/GradientBoosting_random_forest_model.pkl'
-
-#MODEL_V1_PATH = '/app/model/RandomForest_random_forest_model.pkl'
-#MODEL_V2_PATH = '/app/model/GradientBoosting_random_forest_model.pkl'
+# Access the model paths like this
+MODEL_V1_PATH = app.config['MODEL_V1_PATH']
+MODEL_V2_PATH = app.config['MODEL_V2_PATH']
 
 # Load models
 def load_model(model_path):
@@ -137,91 +142,20 @@ class ModelPredictor:
 
         return future_forecasts
 
+# Add a function to monitor resource usage in the background
+def monitor_resources():
+    """Update system resource metrics every 15 seconds"""
+    import psutil
+    while True:
+        process = psutil.Process(os.getpid())
+        memory_usage.set(process.memory_info().rss)  # in bytes
+        cpu_usage.set(process.cpu_percent())
+        time.sleep(15)
+
 # Flask routes
 @app.route('/predictor_home', methods=['GET'])
-def home():
-    app_info = {
-        "API_Name": "Pollutant predictor",
-        "API Description": "This API takes parameters from user and returns a prediction of amount of pollutants",
-        "version": "v1.0",
-        "endpoints": {
-            "/predictor_home": "Home page",
-            "/health_status": "Displays the health status of the API",
-            "v1/predict": "This version of API is based on RandomForest model",
-            "v2/predict": "This version of API is based on GradientBoost model"
-        },
-        "Input format": {
-            "start_year": 2020,
-            "end_year": 2023,
-            "n_lags": 4,
-            "target": "Total_Release_Water",
-            "data": [
-                {
-                    "PROVINCE": "SomeProvince",
-                    "City": "SomeCity",
-                    "Facility_Name/Installation": "SomeFacility",
-                    "Total_Release_Water": 1000,
-                    "Population": 100000,
-                    "Number_of_Employees": 500,
-                    "Release_to_Air(Fugitive)": 200
-                },
-                {
-                    "PROVINCE": "AnotherProvince",
-                    "City": "AnotherCity",
-                    "Facility_Name/Installation": "AnotherFacility",
-                    "Total_Release_Water": 1500,
-                    "Population": 120000,
-                    "Number_of_Employees": 600,
-                    "Release_to_Air(Fugitive)": 250
-                }
-            ]
-        },
-        "example request": {
-            'curl -X POST "http://127.0.0.1:5050/v1/predict" \\': '',
-            '-H "Content-Type: application/json" \\': '',
-            '-d \'{': '',
-            '"start_year": 2023,': '',
-            '"end_year": 2023,': '',
-            '"n_lags": 2,': '',
-            '"target": "Total_Release_Water",': '',
-            '"data": [': '',
-            '{': '',
-            '"Reporting_Year/Année": 2022,': '',
-            '"Population": 50000,': '',
-            '"Number_of_Employees": 100,': '',
-            '"Release_to_Air(Fugitive)": 120.5,': '',
-            '"Release_to_Air(Other_Non-Point)": 60.2,': '',
-            '"Release_to_Air(Road dust)": 24,': '',
-            '"Release_to_Air(Spills)": 110.2,': '',
-            '"Release_to_Air(Stack/Point)": 16.5,': '',
-            '"Release_to_Air(Storage/Handling)": 45.2,': '',
-            '"Releases_to_Land(Leaks)": 111.2,': '',
-            '"Releases_to_Land(Other)": 24,': '',
-            '"Releases_to_Land(Spills)": 36,': '',
-            '"Sum_of_release_to_all_media_(<1tonne)": 16.6,': '',
-            '"PROVINCE": "ON",': '',
-            '"Estimation_Method/Méthode destimation": "Calculated",': '',
-            '"City": "Toronto",': '',
-            '"Facility_Name/Installation": "ABC Plant",': '',
-            '"NAICS Title/Titre_Code_SCIAN": "Chemical Manufacturing",': '',
-            '"NAICS/Code_SCIAN": 325110,': '',
-            '"Company_Name/Dénomination sociale de l\'entreprise": "XYZ Corp"': '',
-            '}': '',
-            ']': '',
-            '}\'': ''
-        },
-        "example response": {
-            "success": True,
-            "prediction": {
-                "PROVINCE": "ON",
-                "Total_Release_Water": 1000,
-                "Year": 2023
-            }
-        }
-    }
-
-    return jsonify(app_info)
-
+def index():
+    return f'Model V1 path: {MODEL_V1_PATH}, Model V2 path: {MODEL_V2_PATH}'
 
 @app.route('/health_status', methods=['GET'])
 def health_check():
@@ -230,7 +164,6 @@ def health_check():
         "message": "pollution predictor is running"
     }
     return jsonify(health)
-
 
 @app.route('/v1/predict', methods=['POST'])
 def predict_v1():
@@ -281,7 +214,6 @@ def predict_v1():
         "prediction": result.to_dict()
     })
 
-
 @app.route('/v2/predict', methods=['POST'])
 def predict_v2():
     data = request.get_json()
@@ -307,24 +239,15 @@ def predict_v2():
     try:
         result = predictor.forecast_future_years_with_metrics(df, start_year, end_year, n_lags, target)
     except KeyError as e:
-        return jsonify({"success": False, "error": str(e)})
+        return jsonify({"success": False, "error": str(e)}), 500
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
     return jsonify({
         "success": True,
         "prediction": result.to_dict()
     })
 
+# Run the app
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Run Prediction API")
-    parser.add_argument('--config', type=str, required=True, help="Path to configuration YAML file")
-    parser.add_argument('--combined_data_path', type=str, required=True, help="Path to the data file")
-    parser.add_argument('--end_year', type=int, required=True, help="End year for forecasting")
-
-    args = parser.parse_args()
-
-    # Set config parameters for the app
-    app.config['CONFIG'] = args.config
-    app.config['COMBINED_DATA_PATH'] = args.combined_data_path
-    app.config['END_YEAR'] = args.end_year
-
-    app.run(host='0.0.0.0', port=9001, debug=True)
+    app.run(debug=True)
