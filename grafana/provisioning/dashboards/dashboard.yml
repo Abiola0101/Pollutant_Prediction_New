@@ -1,0 +1,15 @@
+apiVersion: 1
+
+providers:
+  - name: 'Pollutant Prediction API Dashboards'
+    orgId: 1
+    folder: 'ML Monitoring'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    allowUiManagement: true
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: true
