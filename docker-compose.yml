@@ -8,9 +8,10 @@ services:
     ports:
       - "9000:9000"
     volumes:
-      - ./models:/app/models
+      - ./model:/home/abiola/Pollutant_Prediction_New/model
       - ./data:/app/data
       - ./predictions:/app/predictions
+
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
     depends_on:
@@ -35,7 +36,10 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus:/etc/prometheus
+      - ./prometheus/rules:/etc/prometheus/rules
       - prometheus-data:/prometheus
+    
+
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -46,7 +50,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - flowers-network
+      - pollutant-network
     depends_on:
       - app
 
@@ -62,7 +66,7 @@ services:
       - ./grafana/provisioning:/etc/grafana/provisioning
       - grafana-data:/var/lib/grafana
     networks:
-      - flowers-network
+      - pollutant-network
     depends_on:
       - prometheus
 
@@ -77,3 +81,5 @@ volumes:
     driver: local
   grafana-data:
     driver: local
+
+  
