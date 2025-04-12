@@ -8,6 +8,8 @@ import yaml
 import os
 from mlflow.models.signature import infer_signature
 import logging
+import mlflow
+from mlflow.exceptions import MlflowException
 
 # Configure basic logging
 logging.basicConfig(
@@ -32,13 +34,16 @@ class ModelPredictor:
     def load_model(self):
         """ Load model from MLflow using the run_id from the config file """
         try:
-            run_id = self.config['run_id']
-            model_uri = f"runs:/{run_id}/model"
+            model_uri = f"runs:/{self.config['run_id']}/model"
             model = mlflow.sklearn.load_model(model_uri)
-            logger.info(f"Model loaded from run ID: {run_id}")
             return model
-        except Exception as e:
-            logger.error(f"Error loading model: {e}")
+        except OSError as e:
+            print(f"Error: {e}")
+            print("The model artifact is missing. Verify the run ID and ensure the model was logged correctly.")
+            raise
+        except MlflowException as e:
+            print(f"MLflow error: {e}")
+            print("Ensure the MLflow tracking server is accessible and the run ID is correct.")
             raise
 
     def create_lags_no_group(self, df, feature, n_lags):
