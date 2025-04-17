@@ -1,85 +1,161 @@
-#version: '3'
-
+version: '3.8'
+ 
 services:
+
   app:
+
     build: 
+
       context: .
+
       dockerfile: Dockerfile
+
     ports:
+
       - "9000:9000"
+
     volumes:
-      - ./model:/home/abiola/Pollutant_Prediction_New/model
+
+      - ./model:/app/model
+
       - ./data:/app/data
+
       - ./predictions:/app/predictions
 
     environment:
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
+
+      - MLFLOW_TRACKING_URI=http://mlflow:5001
+
     depends_on:
+
       - mlflow
-    networks:
-      - pollutant-network
 
+    networks:
+
+      - pollutant-network
+ 
   mlflow:
-    build: 
-      context: .
-      dockerfile: Dockerfile.mlflow
-    ports:
-      - "5000:5000"
-    volumes:
-      - mlflow-data:/mlflow
-    networks:
-      - pollutant-network
 
-  prometheus:
-    image: prom/prometheus:latest
+    build: 
+
+      context: .
+
+      dockerfile: Dockerfile.mlflow
+
     ports:
-      - "9090:9090"
+
+      - "5000:5000"
+
     volumes:
+
+      - mlflow-data:/mlflow
+
+    command: >
+
+      mlflow server 
+
+      --backend-store-uri sqlite:///mlflow.db 
+
+      --default-artifact-root /mlflow/artifacts 
+
+      --host 0.0.0.0 
+
+      --port 5000
+
+      
+
+    networks:
+
+      - pollutant-network
+ 
+  prometheus:
+
+    image: prom/prometheus:latest
+
+    ports:
+
+      - "9090:9090"
+
+    volumes:
+
       - ./prometheus:/etc/prometheus
+
       - ./prometheus/rules:/etc/prometheus/rules
+
       - prometheus-data:/prometheus
-    
 
     command:
+
       - '--config.file=/etc/prometheus/prometheus.yml'
+
       - '--storage.tsdb.path=/prometheus'
+
       - '--web.console.libraries=/etc/prometheus/console_libraries'
+
       - '--web.console.templates=/etc/prometheus/consoles'
+
       - '--web.enable-lifecycle'
-    # Add extra_hosts to allow accessing host machine from container
+
     extra_hosts:
+
       - "host.docker.internal:host-gateway"
+
     networks:
+
       - pollutant-network
+
     depends_on:
+
       - app
-
+ 
   grafana:
+
     image: grafana/grafana:latest
+
     ports:
+
       - "3000:3000"
+
     environment:
+
       - GF_SECURITY_ADMIN_USER=admin
+
       - GF_SECURITY_ADMIN_PASSWORD=password
+
       - GF_USERS_ALLOW_SIGN_UP=false
+
     volumes:
+
       - ./grafana/provisioning:/etc/grafana/provisioning
+
       - grafana-data:/var/lib/grafana
+
     networks:
+
       - pollutant-network
+
     depends_on:
+
       - prometheus
-
-networks:
-  pollutant-network:
-    driver: bridge
-    
+ 
 volumes:
+
   mlflow-data:
-    driver: local
-  prometheus-data:
-    driver: local
-  grafana-data:
+
     driver: local
 
-  
+  prometheus-data:
+
+    driver: local
+
+  grafana-data:
+
+    driver: local
+ 
+networks:
+
+  pollutant-network:
+
+    driver: bridge
+
+ 

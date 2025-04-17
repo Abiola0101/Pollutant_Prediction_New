@@ -11,9 +11,36 @@ import os
 from mlflow.models.signature import infer_signature
 import yaml
 import mlflow
-
+from prometheus_client import start_http_server, Gauge
 from logging_config import configure_logging
+import os
 
+
+# Parse command-line arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('--config', type=str, required=True, help='Path to the config file')
+args = parser.parse_args()
+
+# Get the root directory of the project (assumes this script runs from inside the project)
+project_root = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(project_root, ".."))  # go one level up if needed
+
+# Then inside your config parsing block
+with open(args.config) as f:
+    config = yaml.safe_load(f)
+
+# Resolve paths
+combined_data_path = os.path.join(project_root, config["combined_data_path"])
+test_path = os.path.join(project_root, config["test_path"])
+train_path = os.path.join(project_root, config["train_path"])
+
+
+
+
+
+
+# Everything below this line is unchanged
+# Configure logging
 logger = configure_logging()
 logger.debug("Logger configured successfully.")
 
@@ -24,6 +51,11 @@ class ModelTrainer:
             self.config = yaml.safe_load(f)
         mlflow.sklearn.autolog()
         logger.debug("ModelTrainer initialized with config path: %s", config_path)
+
+        # Initialize Prometheus metrics
+        self.rmse_gauge = Gauge('model_rmse', 'Root Mean Squared Error of the model')
+        self.mae_gauge = Gauge('model_mae', 'Mean Absolute Error of the model')
+        self.r2_gauge = Gauge('model_r2', 'R² Score of the model')
 
     def combine_dataframe(self, df1, df2):
         combined_dataframe = pd.concat([df1, df2], axis=0)
@@ -53,10 +85,14 @@ class ModelTrainer:
     def train_model(self, data, start_year, n_lags, target, params):
         try:
             logger.info("Starting model training...")
-            
+            """
             # Set the MLflow tracking URI
-            mlflow_tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000")
+            # mlflow_tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000")
+            # mlflow.set_tracking_uri(mlflow_tracking_uri)
+
+            mlflow_tracking_uri = os.getenv("MLFLOW_TRACKING_URI", self.config["mlflow"]["tracking_uri"])
             mlflow.set_tracking_uri(mlflow_tracking_uri)
+
             
             PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
             MLFLOW_PATH = os.path.join(PROJECT_ROOT, 'mlruns/')
@@ -65,7 +101,24 @@ class ModelTrainer:
             
             experiment_id = self.get_or_create_experiment(experiment_name, artifact_location=artifact_uri)
             logger.info(f"Using experiment_id: {experiment_id}")
+            """
+            # This is new
             
+
+            # Safely get mlflow config
+            mlflow_config = self.config.get("mlflow", {})
+            mlflow_tracking_uri = os.getenv("MLFLOW_TRACKING_URI", mlflow_config.get("tracking_uri", "http://localhost:5000"))
+            mlflow.set_tracking_uri(mlflow_tracking_uri)
+
+            PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            MLFLOW_PATH = os.path.join(PROJECT_ROOT, 'mlruns/')
+            artifact_uri = MLFLOW_PATH
+
+            experiment_name = mlflow_config.get("experiment_name", "Pollutant Prediction")
+            experiment_id = self.get_or_create_experiment(experiment_name, artifact_location=artifact_uri)
+            logger.info(f"Using experiment_id: {experiment_id}")
+            
+            # Nothing  has changed here
             pollutants = [target]
             additional_features = [
                 'Population', 'Number_of_Employees', 'Release_to_Air(Fugitive)', 'Release_to_Air(Other_Non-Point)',
@@ -117,11 +170,14 @@ class ModelTrainer:
 
                 # Evaluate model performance
                 y_pred = pipeline.predict(X_test)
-                metrics = {
-                    'Root Mean Squared Error': np.sqrt(mean_squared_error(y_test, y_pred)),
-                    'Mean Absolute Error': mean_absolute_error(y_test, y_pred),
-                    'R² Score': r2_score(y_test, y_pred)
-                }
+                rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+                mae = mean_absolute_error(y_test, y_pred)
+                r2 = r2_score(y_test, y_pred)
+
+                # Expose metrics to Prometheus
+                self.rmse_gauge.set(rmse)
+                self.mae_gauge.set(mae)
+                self.r2_gauge.set(r2)
 
                 model_directory = os.path.join(os.getcwd(), self.config['model_directory'])  
                 model_filename = f"{model_name}_{self.config['model_filename']}"
@@ -172,6 +228,10 @@ class ModelTrainer:
 
     def main(self):
         try:
+            # Start the Prometheus server on port 8002
+            start_http_server(8002)
+            logger.info("Prometheus server started on port 8002")
+
             # Load dataset paths from config
             train_path = self.config['train_path']
             test_path = self.config['test_path']
@@ -192,6 +252,8 @@ class ModelTrainer:
             target = self.config['target']
             params = self.config['model_params']
 
+            #print("Data columns:", combined_df.columns.tolist())
+
             models, metrics = self.train_model(combined_df, start_year, n_lags, target, params)
             logger.info("Model training complete and saved.")
             logger.info("Metrics:\n" + str(metrics))
@@ -199,12 +261,21 @@ class ModelTrainer:
             logger.error(f"Error in main execution: {e}")
             raise
 
+import yaml
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a machine learning model.")
     parser.add_argument('--config', type=str, required=True, help='Path to the configuration file.')
     
     args = parser.parse_args()
+
+    # ✅ Add this to read your YAML config
+    with open(args.config) as f:
+        config = yaml.safe_load(f)
+
+
     
+    # ✅ Now pass it to your Trainer class (if applicable)
     logger.debug("Starting ModelTrainer with config: %s", args.config)
     trainer = ModelTrainer(args.config)
     trainer.main()

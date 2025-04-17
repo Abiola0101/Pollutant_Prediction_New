@@ -65,10 +65,14 @@ def load_model(model_path):
     try:
         with open(model_path, "rb") as f:
             model = pickle.load(f)
-        logger.info(f"Model loaded from {model_path}")
+        #logger.info(f"Model loaded from {model_path}")
+        app.logger.info(f"Model loaded from {model_path}")
         return model
     except FileNotFoundError:
-        logger.error(f"Model file not found: {model_path}")
+        app.logger.error(f"Model file not found: {model_path}")
+        return None
+    except Exception as e:
+        app.logger.error(f"Error loading model from {model_path}: {str(e)}")
         return None
 
 model_v1 = load_model(MODEL_V1_PATH)

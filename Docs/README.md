@@ -8,7 +8,10 @@ Abi Afolabi
 Abiola Bakare  
  
 Ruth Olasupo
- 
+
+
+💡 Note: All data paths are relative to the project root. No need to change them manually.
+
  
 ## Project Description:
 This assignment is to showcase steps to deploy already developed ML model for NPRI pollution data into production.
@@ -155,8 +158,51 @@ Build and run your application with monitoring enabled:
 
 ```bash
 docker-compose up --build
-```
+
+
 
 Access your monitoring tools:
 * Grafana: http://localhost:pip 3000 (login with admin/password or which ever you have set)
 * Prometheus: http://localhost:9090
+
+To visualize metrics in Grafana
+
+
+
+
+
+To start all services in docker-compose:
+```bash
+docker-compose up
+```
+To run in detachd mode
+```bash
+docker-compose up -d --build
+
+```
+
+
+To check the container Logs
+
+```bash
+docker-compose logs app
+docker-compose logs mlflow
+docker-compose logs prometheus
+docker-compose logs grafana
+```
+
+To check if containers are running
+
+```bash
+docker-compose ps
+```
+
+To run the training without monitoring:
+python3 src/train.py --config ./configs/train_config.yaml
+
+
+To run the training with metrics monitoring:
+#./run_with_metrics.sh --config ./configs/train_config.yaml
+
+./run_with_metrics.sh ./configs/train_config.yaml
+

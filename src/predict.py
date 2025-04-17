@@ -151,3 +151,7 @@ if __name__ == "__main__":
     # Instantiate and run the predictor
     predictor = ModelPredictor(args.config)
     predictor.main(args.combined_data_path, args.end_year)
+
+
+    
+    

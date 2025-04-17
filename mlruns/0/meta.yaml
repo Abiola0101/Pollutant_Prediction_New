@@ -1,6 +1,6 @@
-artifact_location: file:///home/rutholasupo/2500_Labs/mlruns/0
-creation_time: 1740626772795
+artifact_location: mlflow-artifacts:/0
+creation_time: 1744864490833
 experiment_id: '0'
-last_update_time: 1740626772795
+last_update_time: 1744864490833
 lifecycle_stage: active
 name: Default
